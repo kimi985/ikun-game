@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>传统打砖块</title>
+    <!-- 引入外部CSS文件 -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 游戏容器 - 包含画布、信息面板和主菜单 -->
+    <div id="game-container" style="position: relative; width: 100%; height: 100vh;">
+            <!-- 游戏画布 - 用于绘制游戏元素 -->
+            <canvas id="game-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+            <!-- 游戏信息面板 - 显示游戏状态信息 -->
+            <div id="game-info" style="position: absolute; top: 20px; left: 20px; z-index: 10;">
+            <div id="level">关卡：1</div>
+            <div id="mode">模式：击球模式</div>
+            <div id="game-type">类型：关卡模式</div>
+            <div id="score">得分：0</div>
+            <div id="lives">生命：3</div>
+        </div>
+        
+        <!-- 球速调整控件 -->
+        <div id="speed-control" style="position: absolute; top: 20px; right: 20px; z-index: 10; background-image: url('ground.png'); background-size: cover; background-position: center; padding: 15px; border-radius: 10px; box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); width: 400px;">
+            <div style="margin-bottom: 10px; color: white; font-size: 16px;">球速调整 (↑加速 ↓减速)</div>
+            <input type="range" id="speed-slider" min="0.1" max="10" step="0.1" value="1" style="width: 100%;" onkeydown="return false;">
+            <div id="speed-value" style="margin-top: 10px; color: white; font-size: 14px;">1.0x</div>
+        </div>
+        
+        <!-- 滑块样式 -->
+        <style>
+            /* 自定义滑块样式 */
+            #speed-slider {
+                -webkit-appearance: none;
+                width: 100%;
+                height: 10px;
+                border-radius: 5px;
+                background: rgba(255, 255, 255, 0.3);
+                outline: none;
+                z-index: 20;
+                position: relative;
+            }
+            
+            /* 滑块拖动按钮样式 */
+            #speed-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-image: url('stand.png');
+                background-size: contain;
+                background-position: center;
+                background-repeat: no-repeat;
+                cursor: pointer;
+                transition: background-image 0.1s ease;
+                z-index: 30;
+                position: relative;
+            }
+            
+            /* 滑块拖动时的按钮样式 */
+            #speed-slider::-webkit-slider-thumb:hover,
+            #speed-slider::-webkit-slider-thumb:active {
+                background-image: url('walk.png');
+            }
+            
+            /* Firefox 滑块样式 */
+            #speed-slider::-moz-range-thumb {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-image: url('stand.png');
+                background-size: contain;
+                background-position: center;
+                background-repeat: no-repeat;
+                cursor: pointer;
+                border: none;
+                transition: background-image 0.1s ease;
+                z-index: 30;
+                position: relative;
+            }
+            
+            /* Firefox 滑块拖动时的按钮样式 */
+            #speed-slider::-moz-range-thumb:hover,
+            #speed-slider::-moz-range-thumb:active {
+                background-image: url('walk.png');
+            }
+        </style>
+        
+        <!-- 主菜单 - 游戏开始前的模式选择界面 -->
+        <div id="main-menu" style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100vh; background-color: rgba(255, 255, 255, 0.9); z-index: 20;">
+            <h2 style="font-size: 36px; margin-bottom: 40px;">选择游戏模式</h2>
+            <div style="display: flex; gap: 30px;">
+                <button onclick="startLevelMode()" style="padding: 15px 30px; font-size: 24px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer;">关卡模式</button>
+                <button onclick="startEndlessMode()" style="padding: 15px 30px; font-size: 24px; background-color: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer;">无尽模式</button>
+            </div>
+            <div style="margin-top: 40px; font-size: 18px; color: #333333; text-align: center;">
+                <p>操作说明：</p>
+                <p>← → 方向键：控制底板移动</p>
+                <p>↑ ↓ 方向键：控制球速</p>
+                <p>空格键：发球</p>
+                <p>R键：切换模式</p>
+            </div>
+        </div>
+    </div>
+    <!-- 图片资源 - 游戏中使用的图片，设置为display: none以隐藏 -->
+    <img id="kunkun-image" src="kunkun.webp" alt="卡通形象" style="display: none;">
+    <img id="ikun-image" src="ikun.jpg" alt="板子形象" style="display: none;">
+    <img id="ji-image" src="ji.jpg" alt="双重板子形象" style="display: none;">
+    <img id="boss1-image" src="boss1.webp" alt="boss1形象" style="display: none;">
+    <img id="boss2-image" src="boss2.jpg" alt="boss2形象" style="display: none;">
+    <img id="buff-2-image" src="2.png" alt="发两个球buff图标" style="display: none;">
+    <img id="buff-5-image" src="5.png" alt="双倍球buff图标" style="display: none;">
+    <img id="gameover-image" src="gameover.jpg" alt="游戏结束图片" style="display: none;">
+    
+    <!-- 闪电特效容器 -->
+    <div id="lightning-effect" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; display: none;"></div>
+    
+    <!-- 游戏结束图片容器 -->
+    <div id="gameover-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; display: none;">
+        <img id="gameover-full-image" src="gameover.jpg" alt="游戏结束图片" style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+    
+    <!-- 音频资源 -->
+    <audio id="ganmaover-audio" src="gameover.wav" preload="auto"></audio>
+    <audio id="nigamma-audio" src="niganma.mp3" preload="auto"></audio>
+    <audio id="jinitaimei-audio" src="jinitaimei.mp3" preload="auto"></audio>
+
+    <!-- 引入外部JS文件 -->
+    <script src="script.js"></script>
+</body>
+</html>
